@@ -1,0 +1,22 @@
+[
+  {
+    "run_name": "yoochoose_1_64_gru_linear_20260419-144917",
+    "recall_at_20": 1.0,
+    "mrr_at_20": 0.75,
+    "hitrate_at_20": 1.0,
+    "parameter_count": 116869,
+    "best_validation_mrr_at_20": 0.625,
+    "epochs_ran": 4,
+    "runtime_seconds": 0.09573626518249512
+  },
+  {
+    "run_name": "yoochoose_1_64_gru_linear_20260419-144933",
+    "recall_at_20": 1.0,
+    "mrr_at_20": 0.75,
+    "hitrate_at_20": 1.0,
+    "parameter_count": 116869,
+    "best_validation_mrr_at_20": 0.625,
+    "epochs_ran": 20,
+    "runtime_seconds": 0.34694552421569824
+  }
+]

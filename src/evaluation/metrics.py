@@ -9,7 +9,8 @@ import torch
 def recall_mrr_at_k(logits: torch.Tensor, targets: torch.Tensor, k: int = 20) -> Dict[str, float]:
     logits = logits.clone()
     logits[:, 0] = torch.finfo(logits.dtype).min
-    topk = torch.topk(logits, k=k, dim=1).indices
+    effective_k = min(k, logits.size(1))
+    topk = torch.topk(logits, k=effective_k, dim=1).indices
     hits = topk.eq(targets.unsqueeze(1))
 
     recall = hits.any(dim=1).float().mean().item()

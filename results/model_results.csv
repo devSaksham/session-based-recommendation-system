@@ -1,0 +1,3 @@
+run_name,recall_at_20,mrr_at_20,hitrate_at_20,parameter_count,best_validation_mrr_at_20,epochs_ran,runtime_seconds
+yoochoose_1_64_gru_linear_20260419-144917,1.0,0.75,1.0,116869,0.625,4,0.09573626518249512
+yoochoose_1_64_gru_linear_20260419-144933,1.0,0.75,1.0,116869,0.625,20,0.34694552421569824

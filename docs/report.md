@@ -1,151 +1,109 @@
-# Technical Report
+# Technical Report: Experimental GRU-KAN for Session-Based Recommendation
 
-## Introduction
+## 1. Introduction
 
-This project studies session-based next-item recommendation on YooChoose using an experimental hybrid architecture that combines a recurrent session encoder with a KAN-style prediction head. The motivation is to preserve the strong sequential inductive bias of GRU-based session models while exploring a richer nonlinear representation-to-score mapping than a standard linear or MLP head.
+We study next-item prediction in anonymous sessions using a GRU encoder plus an experimental KAN-style head. The goal is to test head-level nonlinear expressiveness without changing the recurrent backbone.
 
-## Background and Related Work
+## 2. Background and Related Work
 
-Session-based recommendation focuses on predicting the next interaction within a short anonymous session, rather than relying on long-term user profiles. This problem became a major benchmark area through work such as GRU4Rec, which demonstrated that recurrent models can outperform classical nearest-neighbor and factorization baselines in session settings.
+Session recommendation on YooChoose has historically compared methods such as POP/S-POP, Item-KNN, FPMC, GRU4Rec, NARM, STAMP, and SR-GNN. This repository does **not** reimplement those external baselines; it stores literature-reported values in structured form with citations.
 
-Representative benchmark models on YooChoose include:
+## 3. Motivation for GRU-KAN
 
-- POP and S-POP
-- Item-KNN
-- BPR-MF
-- FPMC
-- GRU4Rec
-- NARM
-- STAMP
-- SR-GNN
+KAN-style transformations can represent nonlinear mappings via learnable piecewise functions. We use this idea only in the prediction head to keep:
 
-The repository collects literature-reported values for these models from published papers and stores them as structured metadata rather than reimplementing the baselines locally.
+- sequence modeling stable (`GRU`),
+- ablations clean (`linear` vs `MLP` vs `KAN`),
+- interpretation focused on representation-to-score mapping.
 
-## Why GRU-KAN
+## 4. Architecture
 
-Direct prior work on applying Kolmogorov-Arnold Networks to session-based recommendation is limited, so the proposed architecture is explicitly framed as an experimental hybrid. The KAN component is used as a **head module after the recurrent session representation**, not as a replacement for the recurrent cell. This design is technically motivated because it:
+Shared backbone:
 
-- keeps the sequence modeling component conventional and interpretable
-- isolates the experimental contribution
-- enables clean internal ablations against linear and MLP heads
-
-The implemented KAN head uses learnable piecewise linear edge functions as a lightweight approximation of the broader KAN idea.
-
-## Dataset and Preprocessing
-
-### Main protocol
-
-- Dataset: YooChoose clicks
-- Variant: deterministic `yoochoose_1_64` session subsample
-- Filtering:
-  - remove sessions shorter than length 2
-  - iteratively remove low-support items with minimum support 5
-  - remove newly short sessions again
-- Split:
-  - training: sessions ending before the last 48 hours
-  - validation: sessions ending in the 24-hour window before the final day
-  - test: sessions ending in the final 24-hour window
-- Evaluation examples:
-  - convert each session into prefix-target pairs for next-item prediction
-
-### Current benchmark metadata
-
-The most recent completed preprocessing summary for `yoochoose_1_64` produced:
-
-- raw sampled events: 512,066
-- train events: 463,891
-- validation events: 825
-- test events: 1,033
-- train examples: 344,566
-- validation examples: 654
-- test examples: 791
-- vocabulary size: 10,629
-
-These statistics should be interpreted carefully because the current variant is a deterministic raw-session subsample and not a packaged official benchmark release.
-
-## Model Architecture
-
-The implemented family shares the following backbone:
-
-1. item embedding layer
-2. GRU encoder
-3. masked extraction of the last valid hidden state
+1. item embedding
+2. GRU session encoder
+3. last valid hidden state extraction
 4. head module
-5. output scorer over the full item vocabulary
+5. item-vocabulary scorer
 
-The three implemented variants are:
+Variants:
+
+- `gru_linear`
+- `gru_mlp`
+- `gru_kan` (two piecewise-linear KAN layers with tanh + dropout)
+
+## 5. Dataset and Preprocessing
+
+Primary configuration: `configs/data/yoochoose_1_64.yaml`.
+
+Pipeline details:
+
+- clicks-only input
+- deterministic session-id subsample with `fraction=1/64` (`session_id % 64 == 0`)
+- iterative filtering (`min_session_length=2`, `min_item_support=5`)
+- temporal split by session end-time (train / validation / test windows)
+- drop unseen validation/test items
+- prefix-target construction for next-item learning
+
+### Protocol caveat
+
+This is a deterministic raw-session approximation; it may not exactly match official packaged benchmark variants used in all papers.
+
+## 6. Experiments
+
+Planned ablations:
 
 - `gru_linear`
 - `gru_mlp`
 - `gru_kan`
 
-The KAN head uses two piecewise-linear layers with learnable basis values over a fixed grid and a tanh nonlinearity between them.
+Reported metrics:
 
-## Training Setup
+- Recall@20
+- MRR@20
+- parameter count
+- runtime (aggregated per-epoch train+validation durations when available)
 
-- Framework: PyTorch
-- Loss: cross-entropy for next-item classification
-- Optimizer: AdamW
-- Early stopping target: validation `MRR@20`
-- Metrics: `Recall@20`, `MRR@20`
-- Determinism:
-  - random seeds set for Python, NumPy, and PyTorch
-  - optional deterministic CuDNN behavior when CUDA is available
-- Runtime logging:
-  - resolved config
-  - runtime environment metadata
-  - training summary
-  - checkpoints
+## 7. Evaluation Methodology
 
-## Evaluation Methodology
+All-item ranking is computed (excluding padding id). Recall@20 measures hit presence in top-20, and MRR@20 is reciprocal-rank sensitive over hits.
 
-At evaluation time, the model ranks all candidate items except padding. `Recall@20` measures whether the true next item appears in the top 20. `MRR@20` reflects rank sensitivity by averaging reciprocal ranks for correct hits within the top 20.
+## 8. Literature Comparison
 
-## Literature Baselines
+Baseline rows in `src/research/literature_baselines.json` preserve:
 
-The repository stores literature rows in `src/research/literature_baselines.json`. Each row records:
+- paper-reported metric naming (`P@20` kept where used)
+- citation keys and URLs
+- comparability notes
 
-- model name
-- paper title
-- authors
-- venue and year
-- dataset variant
-- metric values
-- citation key
-- source URL
-- protocol note
-- comparability note
+Comparisons against local ablations should be labeled **approximate** unless protocol equivalence is proven.
 
-Important fairness note: many papers report `P@20` for YooChoose tables, while later work often discusses comparable values as `Recall@20`. This repository preserves the original metric naming and annotates any equivalence claims rather than silently renaming them.
+## 9. Current Results and Analysis
 
-## Current Results Status
+The training pipeline consumes `data/processed/yoochoose_1_64` directly when preprocessed artifacts are available in-repo. Raw ingestion is only required when regenerating processed splits.
 
-The codebase, tests, preprocessing, and literature assets are in place. A long `gru_linear` benchmark run was started and produced checkpoints before interruption, but the full ablation suite and final comparison tables still need to be completed.
+What is complete:
 
-Because of that, this report deliberately does **not** claim final model performance yet. The intended next step is to finish the three ablation runs, evaluate the saved checkpoints, export the model-results table, and then compare those measured values against the literature baseline file with explicit protocol caveats.
+- preprocessing, model, training, evaluation pipelines
+- tests passing
+- literature baseline assets and exports
+- run/result auditing and summary tooling
 
-## Limitations
+## 10. Limitations
 
-- The current `yoochoose_1_64` variant is an approximation derived from raw clicks rather than the exact benchmark package used by all papers.
-- CPU-only execution makes full ablation sweeps time-consuming.
-- Literature tables are useful for orientation, but not perfectly apples-to-apples without exact split reproduction.
-- The clicks+buys configuration is exploratory and intentionally separated from the primary comparison workflow.
+- Full protocol regeneration from raw data still requires local raw YooChoose files, even though training can run directly from committed preprocessed artifacts.
+- `yoochoose_1_64` path is an approximation protocol.
+- Literature-vs-local comparisons are not strict apples-to-apples.
+- GRU-KAN remains exploratory.
 
-## Conclusion
+## 11. Conclusion
 
-This repository already provides a solid, reproducible foundation for an academically honest GRU-KAN session-recommendation study:
+The repository is positioned for reproducible completion from committed processed data: execute the three ablations, aggregate results with `scripts/report_results.py`, and report comparisons with explicit fairness caveats. Re-run preprocessing only when protocol regeneration is needed.
 
-- preprocessing is implemented
-- the model family is implemented
-- evaluation metrics are implemented and tested
-- literature baselines are structured and citation-aware
+## 12. References
 
-The remaining work is experimental completion and final write-up polish rather than architectural bootstrapping.
-
-## References
-
-- Hidasi, B., Karatzoglou, A., Baltrunas, L., and Tikk, D. Session-based Recommendations with Recurrent Neural Networks.
-- Li, J., Ren, P., Chen, Z., Ren, Z., Ma, J., and de Rijke, M. Neural Attentive Session-based Recommendation.
-- Liu, Q., Zeng, Y., Mokhosi, R., and Zhang, H. STAMP: Short-Term Attention/Memory Priority Model for Session-based Recommendation.
-- Wu, S., Tang, Y., Zhu, Y., Wang, L., Xie, X., and Tan, T. Session-Based Recommendation with Graph Neural Networks.
-- Liu, Z., Wang, Y., Vaidya, S., et al. KAN: Kolmogorov-Arnold Networks.
+- Hidasi et al., *Session-based Recommendations with Recurrent Neural Networks*.
+- Li et al., *Neural Attentive Session-based Recommendation*.
+- Liu et al., *STAMP: Short-Term Attention/Memory Priority Model for Session-based Recommendation*.
+- Wu et al., *Session-Based Recommendation with Graph Neural Networks*.
+- Liu et al., *KAN: Kolmogorov-Arnold Networks*.
