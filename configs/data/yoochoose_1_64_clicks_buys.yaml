@@ -1,0 +1,16 @@
+variant: yoochoose_1_64_clicks_buys
+source:
+  clicks_path: ../Dataset/yoochoose-clicks.dat
+  buys_path: ../Dataset/yoochoose-buys.dat
+output:
+  processed_dir: data/processed/yoochoose_1_64_clicks_buys
+  include_buys: true
+sampling:
+  fraction: 0.015625
+filtering:
+  min_session_length: 2
+  min_item_support: 5
+split:
+  validation_days: 1
+  test_days: 1
+  drop_unseen_items: true
