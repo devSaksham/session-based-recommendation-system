@@ -1,0 +1,16 @@
+{
+  "include_buys": false,
+  "max_train_sequence_length": 197,
+  "num_items": 10629,
+  "raw_events": 512066,
+  "test_events": 1033,
+  "test_examples": 791,
+  "test_sessions": 242,
+  "train_events": 463891,
+  "train_examples": 344566,
+  "train_sessions": 119325,
+  "validation_events": 825,
+  "validation_examples": 654,
+  "validation_sessions": 171,
+  "variant": "yoochoose_1_64"
+}
