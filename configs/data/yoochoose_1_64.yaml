@@ -1,7 +1,7 @@
 variant: yoochoose_1_64
 source:
-  clicks_path: ../Dataset/yoochoose-clicks.dat
-  buys_path: ../Dataset/yoochoose-buys.dat
+  clicks_path: data/raw/yoochoose-clicks.dat
+  buys_path: data/raw/yoochoose-buys.dat
 output:
   processed_dir: data/processed/yoochoose_1_64
   include_buys: false

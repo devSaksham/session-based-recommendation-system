@@ -1,179 +1,118 @@
-# Session-Based Recommendation System
+# Session-Based Recommendation with Experimental GRU-KAN Head
 
-This repository contains a reproducible PyTorch research codebase for session-based next-item recommendation on YooChoose, centered on an experimental hybrid **GRU-KAN** architecture. The main design keeps the sequential modeling inductive bias in a GRU encoder and replaces the usual dense prediction head with a KAN-style nonlinear transformation block.
+This repository is a research-oriented PyTorch codebase for **session-based next-item recommendation** on YooChoose. It studies an experimental architectural variant where a standard GRU session encoder is paired with a KAN-style prediction head.
 
-## Why This Project
+## Problem Statement
 
-Session-based recommendation predicts the next item a user is likely to interact with when long-term user profiles are unavailable or intentionally ignored. This setting is central to anonymous browsing, cold-start traffic, and short-lived e-commerce sessions. Recurrent models such as GRU4Rec helped establish strong neural baselines in this regime, while later models like NARM, STAMP, and SR-GNN improved session representation learning in different ways.
+Session-based recommendation predicts the next item in a short anonymous interaction sequence. This matters in practical settings where persistent user identity is absent or unreliable (e.g., guest users, cold-start traffic, privacy-constrained environments).
 
-This repository explores whether a **KAN-based head** can act as a richer nonlinear mapping from recurrent session states to next-item scores without replacing the recurrent backbone itself.
+## Why Explore GRU-KAN?
 
-## Current Scope
+The intent is not to replace the recurrent backbone, but to test whether a richer nonlinear head improves mapping from session representation to item scores.
 
-- Primary protocol: clicks-only YooChoose preprocessing
-- Primary dataset variant: deterministic `yoochoose_1_64` approximation from raw clicks
-- Model family:
-  - `gru_linear`
-  - `gru_mlp`
-  - `gru_kan`
-- Metrics:
-  - `Recall@20`
-  - `MRR@20`
-- Literature comparison:
-  - baseline results collected from published papers, not reimplemented here
-- Secondary study:
-  - optional clicks+buys exploratory preprocessing config is included but intentionally kept separate from the main comparison path
+- `gru_linear`: minimal projection head baseline.
+- `gru_mlp`: nonlinear dense baseline head.
+- `gru_kan`: experimental piecewise-linear KAN-style head.
 
-## Repository Layout
+This keeps the experiment focused and allows fair in-family ablations.
 
-```text
-session-based-recommendation-system/
-  configs/
-  data/
-  docs/
-  notebooks/
-  results/
-  scripts/
-  src/
-  tests/
-  README.md
-  requirements.txt
+## Dataset and Preprocessing
+
+Primary protocol uses YooChoose clicks only with a deterministic session-id subsample for `yoochoose_1_64`:
+
+1. read clicks
+2. keep sessions where `session_id % 64 == 0` (deterministic approximation)
+3. iterative filtering (`min_session_length=2`, `min_item_support=5`)
+4. temporal split by session end-time:
+   - train: older than last 48h
+   - validation: next 24h window
+   - test: final 24h window
+5. drop validation/test items unseen in train
+6. convert sessions into prefix-target examples
+
+> **Important comparability caveat:** this `yoochoose_1_64` path is a deterministic raw-session subsample approximation, not guaranteed to be identical to every published benchmark packaging. Literature comparisons are therefore approximate.
+
+## Reproducible Commands
+
+Set environment and run from repository root:
+
+```bash
+export PYTHONPATH=.
 ```
 
-## Preprocessing Protocol
+Download raw dataset from Google Drive and place files under `data/raw/`:
 
-The main preprocessing pipeline:
-
-1. loads YooChoose clicks
-2. optionally applies deterministic session-level downsampling for the `1/64` variant
-3. sorts by `session_id` and timestamp
-4. iteratively filters short sessions and low-support items
-5. builds temporal train/validation/test splits using the last 24 hours for test and the previous 24 hours for validation
-6. removes validation/test items unseen in training
-7. converts sessions into prefix-target examples for next-item prediction
-
-Processed outputs include:
-
-- event-level parquet files
-- example-level pickle files
-- item encoder / decoder files
-- metadata JSON
-
-## Model Design
-
-The shared architecture is:
-
-1. `Embedding(num_items + 1, embedding_dim, padding_idx=0)`
-2. `GRU(embedding_dim -> hidden_dim, batch_first=True)`
-3. last-valid hidden-state extraction with sequence lengths
-4. head module:
-   - linear head for `gru_linear`
-   - MLP head for `gru_mlp`
-   - KAN-style piecewise linear head for `gru_kan`
-5. output scorer over the item vocabulary
-
-The KAN integration is intentionally localized to the head so that:
-
-- the recurrent encoder remains standard and interpretable
-- the experimental contribution is isolated
-- ablations remain fair within the proposed model family
-
-## Reproducible Setup
-
-This workspace did not expose system `python` on `PATH`, so the implementation was validated with a local virtual environment:
-
-```powershell
-C:\Users\NS\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+python scripts/fetch_dataset.py --drive-url "https://drive.google.com/file/d/1c5s1ugm-6-xJvLpj5_ibjVkNsGRhJGzO/view?usp=drive_link"
 ```
 
-## Commands
+Preprocess:
 
-Preprocess the primary benchmark variant:
-
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\preprocess.py --config configs\data\yoochoose_1_64.yaml
+```bash
+python scripts/preprocess.py --config configs/data/yoochoose_1_64.yaml
 ```
 
-Preprocess the debug variant:
+Train ablations:
 
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\preprocess.py --config configs\data\yoochoose_full_clicks_debug.yaml
+```bash
+python scripts/train.py --data-config configs/data/yoochoose_1_64.yaml --model-config configs/model/gru_linear.yaml
+python scripts/train.py --data-config configs/data/yoochoose_1_64.yaml --model-config configs/model/gru_mlp.yaml
+python scripts/train.py --data-config configs/data/yoochoose_1_64.yaml --model-config configs/model/gru_kan.yaml
 ```
 
-Train a model:
+Evaluate checkpoint:
 
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\train.py --data-config configs\data\yoochoose_1_64.yaml --model-config configs\model\gru_kan.yaml
+```bash
+python scripts/evaluate.py --checkpoint <checkpoint.pt> --data-config configs/data/yoochoose_1_64.yaml --model-config configs/model/gru_kan.yaml
 ```
 
-Evaluate a checkpoint:
+Generate model result summaries (Markdown + CSV + JSON):
 
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\evaluate.py --checkpoint <checkpoint_path> --data-config configs\data\yoochoose_1_64.yaml --model-config configs\model\gru_kan.yaml
+```bash
+python scripts/report_results.py --runs-root results/runs --output-prefix results/generated/model_results
+```
+
+Audit processed data, runs, and literature baseline integrity:
+
+```bash
+python scripts/audit_research_state.py --check-urls --output results/generated/research_state_audit.json
 ```
 
 Export literature baselines:
 
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\collect_baselines.py --output results\literature_baselines.csv
-```
-
-Assemble model result tables from finished runs:
-
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe scripts\report_results.py
+```bash
+python scripts/collect_baselines.py --output results/literature_baselines.csv
 ```
 
 Run tests:
 
-```powershell
-$env:PYTHONPATH='.'
-.\.venv\Scripts\python.exe -m pytest tests -q
+```bash
+PYTHONPATH=. pytest -q
 ```
+
+## Measured Results (Current Workspace State)
+
+This repository now includes tooling to aggregate finished runs, but this specific environment currently has no local YooChoose raw data at `data/raw` and no completed run artifacts under `results/runs`. Therefore no new model metrics are claimed here.
 
 ## Literature Comparison Methodology
 
-The repository stores literature baselines in `src/research/literature_baselines.json` and exports them to CSV/JSON/Markdown. Reported values are kept citation-aware and protocol-aware:
+Baselines are stored in `src/research/literature_baselines.json` and exported to CSV/JSON/Markdown. Protocol safeguards:
 
-- the original metric name is preserved when papers use `P@20` rather than `Recall@20`
-- source paper and citation key are stored for every row
-- comparisons are explicitly treated as approximate when the local preprocessing differs from the original benchmark package
-
-## Current Status
-
-Completed:
-
-- clean repository scaffold
-- preprocessing pipeline
-- dataset loaders and collator
-- metrics
-- GRU + Linear / MLP / KAN model family
-- training and evaluation CLI
-- literature baseline asset and export script
-- tests passing locally
-
-Partially completed:
-
-- benchmark training runs were started, and checkpoints exist for an interrupted `gru_linear` run
-- polished experiment tables and the final narrative report still need completion after the full ablation runs finish
+- retain original metric naming from source papers (e.g., `P@20` vs `Recall@20`)
+- retain citation key and source URL per row
+- annotate `comparability` and protocol notes
+- treat local-vs-paper comparison as approximate unless split/package equivalence is established
 
 ## Limitations
 
-- The current `yoochoose_1_64` path is a deterministic raw-session subsample, not the official benchmark package used in every paper table. It is useful for controlled local experimentation but must be labeled carefully in comparisons.
-- Full ablation runs on CPU are slow; the current defaults are intentionally conservative.
-- The clicks+buys path is exploratory and should not be mixed into the main literature table without separate protocol discussion.
+- No claim of exact canonical YooChoose benchmark reproduction.
+- CPU-only environments may make full ablations slow.
+- Literature comparison is citation-aware but not fully apples-to-apples without exact benchmark alignment.
+- GRU-KAN remains experimental.
 
-## References
+## Future Work
 
-- Balázs Hidasi et al. Session-based Recommendations with Recurrent Neural Networks.
-- Jing Li et al. Neural Attentive Session-based Recommendation.
-- Qiao Liu et al. STAMP: Short-Term Attention/Memory Priority Model for Session-based Recommendation.
-- Shu Wu et al. Session-Based Recommendation with Graph Neural Networks.
-- Ziming Liu et al. KAN: Kolmogorov-Arnold Networks.
+- Reproduce official benchmark packaging more exactly and document divergence quantitatively.
+- Run multi-seed ablations and report confidence intervals.
+- Add rank-cutoff sweeps (`@10`, `@20`, `@50`) and calibration diagnostics.
+- Profile head-level compute cost vs. gains.
