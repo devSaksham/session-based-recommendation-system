@@ -1,6 +1,6 @@
 variant: yoochoose_full_clicks_debug
 source:
-  clicks_path: ../Dataset/yoochoose-clicks.dat
+  clicks_path: data/raw/yoochoose-clicks.dat
 output:
   processed_dir: data/processed/yoochoose_full_clicks_debug
   include_buys: false

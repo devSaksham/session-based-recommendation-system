@@ -40,6 +40,12 @@ Set environment and run from repository root:
 export PYTHONPATH=.
 ```
 
+Download raw dataset from Google Drive and place files under `data/raw/`:
+
+```bash
+python scripts/fetch_dataset.py --drive-url "https://drive.google.com/file/d/1c5s1ugm-6-xJvLpj5_ibjVkNsGRhJGzO/view?usp=drive_link"
+```
+
 Preprocess:
 
 ```bash
@@ -86,7 +92,7 @@ PYTHONPATH=. pytest -q
 
 ## Measured Results (Current Workspace State)
 
-This repository now includes tooling to aggregate finished runs, but this specific environment currently has no local YooChoose raw data at `../Dataset` and no completed run artifacts under `results/runs`. Therefore no new model metrics are claimed here.
+This repository now includes tooling to aggregate finished runs, but this specific environment currently has no local YooChoose raw data at `data/raw` and no completed run artifacts under `results/runs`. Therefore no new model metrics are claimed here.
 
 ## Literature Comparison Methodology
 

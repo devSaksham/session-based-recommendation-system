@@ -80,7 +80,7 @@ Comparisons against local ablations should be labeled **approximate** unless pro
 
 ## 9. Current Results and Analysis
 
-In the current execution environment (April 19, 2026 UTC), no local raw YooChoose files were available at `../Dataset`, and no completed run artifacts were present under `results/runs`. Therefore, this report does not claim final measured ablation outcomes yet.
+In the current execution environment (April 19, 2026 UTC), no local raw YooChoose files were available at `data/raw`, and no completed run artifacts were present under `results/runs`. Therefore, this report does not claim final measured ablation outcomes yet.
 
 What is complete:
 
