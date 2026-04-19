@@ -6,8 +6,8 @@ model:
   tie_embeddings: false
   mlp_hidden_dim: 128
 training:
-  batch_size: 256
-  epochs: 10
+  batch_size: 512
+  epochs: 5
   learning_rate: 0.001
   weight_decay: 1.0e-5
   grad_clip_norm: 5.0
