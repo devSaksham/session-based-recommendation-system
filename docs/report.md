@@ -91,14 +91,14 @@ What is complete:
 
 ## 10. Limitations
 
-- Missing local raw dataset in this environment blocks full training completion.
+- Full protocol regeneration from raw data still requires local raw YooChoose files, even though training can run directly from committed preprocessed artifacts.
 - `yoochoose_1_64` path is an approximation protocol.
 - Literature-vs-local comparisons are not strict apples-to-apples.
 - GRU-KAN remains exploratory.
 
 ## 11. Conclusion
 
-The repository is positioned for reproducible completion once data is mounted: run preprocessing, execute the three ablations, aggregate results with `scripts/report_results.py`, and report comparisons with explicit fairness caveats.
+The repository is positioned for reproducible completion from committed processed data: execute the three ablations, aggregate results with `scripts/report_results.py`, and report comparisons with explicit fairness caveats. Re-run preprocessing only when protocol regeneration is needed.
 
 ## 12. References
 
