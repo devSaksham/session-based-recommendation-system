@@ -14,6 +14,22 @@ from src.utils.io import dump_json, load_json
 from src.utils.runtime import resolve_device
 
 
+REQUIRED_PROCESSED_FILES = [
+    "metadata.json",
+    "test_examples.pkl",
+]
+
+
+def validate_processed_dir(processed_dir: Path) -> None:
+    missing = [name for name in REQUIRED_PROCESSED_FILES if not (processed_dir / name).exists()]
+    if missing:
+        missing_text = ", ".join(missing)
+        raise FileNotFoundError(
+            f"Processed dataset is incomplete at {processed_dir}. Missing: {missing_text}. "
+            "If preprocessed data was committed, ensure these files exist in the configured folder."
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate a trained session recommendation checkpoint.")
     parser.add_argument("--checkpoint", required=True)
@@ -25,6 +41,7 @@ def main() -> None:
 
     config = load_config(args.base_config, args.data_config, args.model_config, args.eval_config)
     processed_dir = Path(config["output"]["processed_dir"])
+    validate_processed_dir(processed_dir)
     metadata = load_json(processed_dir / "metadata.json")
 
     test_dataset = SessionDataset(processed_dir / "test_examples.pkl")

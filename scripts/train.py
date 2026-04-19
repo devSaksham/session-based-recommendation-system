@@ -15,6 +15,25 @@ from src.utils.runtime import collect_runtime_info, resolve_device
 from src.utils.seed import set_seed
 
 
+REQUIRED_PROCESSED_FILES = [
+    "metadata.json",
+    "train_examples.pkl",
+    "validation_examples.pkl",
+    "test_examples.pkl",
+]
+
+
+def validate_processed_dir(processed_dir: Path) -> None:
+    missing = [name for name in REQUIRED_PROCESSED_FILES if not (processed_dir / name).exists()]
+    if missing:
+        missing_text = ", ".join(missing)
+        raise FileNotFoundError(
+            f"Processed dataset is incomplete at {processed_dir}. Missing: {missing_text}. "
+            "If preprocessed data was committed, ensure these files exist in the configured folder. "
+            "Otherwise run: PYTHONPATH=. python scripts/preprocess.py --config configs/data/yoochoose_1_64.yaml"
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train a session-based recommendation model.")
     parser.add_argument("--data-config", default="configs/data/yoochoose_1_64.yaml")
@@ -27,6 +46,7 @@ def main() -> None:
     set_seed(int(config["project"]["seed"]), deterministic=bool(config["environment"]["deterministic"]))
 
     processed_dir = Path(config["output"]["processed_dir"])
+    validate_processed_dir(processed_dir)
     metadata = load_json(processed_dir / "metadata.json")
     num_items = int(metadata["num_items"])
 
