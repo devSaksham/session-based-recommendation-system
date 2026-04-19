@@ -1,0 +1,11 @@
+project:
+  name: session-based-recommendation-system
+  seed: 42
+  output_root: results/runs
+  checkpoints_root: results/checkpoints
+  generated_root: results/generated
+
+environment:
+  use_amp: true
+  deterministic: true
+  num_workers: 0

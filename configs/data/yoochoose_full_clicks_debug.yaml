@@ -1,0 +1,16 @@
+variant: yoochoose_full_clicks_debug
+source:
+  clicks_path: ../Dataset/yoochoose-clicks.dat
+output:
+  processed_dir: data/processed/yoochoose_full_clicks_debug
+  include_buys: false
+sampling:
+  fraction: 1.0
+  max_rows: 200000
+filtering:
+  min_session_length: 2
+  min_item_support: 5
+split:
+  validation_days: 1
+  test_days: 1
+  drop_unseen_items: true

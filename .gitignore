@@ -1,0 +1,34 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+*.log
+*.tmp
+*.bak
+
+# Data and experiment artifacts
+/data/raw/
+/data/processed/
+/results/runs/
+/results/checkpoints/
+/results/generated/
+/results/tables/*.auto.md
+/results/tables/*.auto.csv
+/results/tables/*.auto.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
