@@ -81,18 +81,12 @@ python scripts/audit_research_state.py --check-urls --output results/generated/r
 Export literature baselines:
 
 ```bash
-python scripts/collect_baselines.py --output results/literature_baselines.csv
-```
-
-Run tests:
-
-```bash
 PYTHONPATH=. pytest -q
 ```
 
 ## Measured Results (Current Workspace State)
 
-This repository now includes tooling to aggregate finished runs, but this specific environment currently has no local YooChoose raw data at `data/raw` and no completed run artifacts under `results/runs`. Therefore no new model metrics are claimed here.
+This repository supports training directly from committed preprocessed artifacts in `data/processed/yoochoose_1_64`. If that directory is present, raw dataset download is not required for model training.
 
 ## Literature Comparison Methodology
 
