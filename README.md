@@ -40,9 +40,13 @@ Set environment and run from repository root:
 export PYTHONPATH=.
 ```
 
-If preprocessed files are already committed under `data/processed/yoochoose_1_64`, you can train directly.
+Download raw dataset from Google Drive and place files under `data/raw/`:
 
-Optional (only when rebuilding processed files from raw clicks):
+```bash
+python scripts/fetch_dataset.py --drive-url "https://drive.google.com/file/d/1c5s1ugm-6-xJvLpj5_ibjVkNsGRhJGzO/view?usp=drive_link"
+```
+
+Preprocess:
 
 ```bash
 python scripts/preprocess.py --config configs/data/yoochoose_1_64.yaml
@@ -75,12 +79,6 @@ python scripts/audit_research_state.py --check-urls --output results/generated/r
 ```
 
 Export literature baselines:
-
-```bash
-python scripts/collect_baselines.py --output results/literature_baselines.csv
-```
-
-Run tests:
 
 ```bash
 PYTHONPATH=. pytest -q
