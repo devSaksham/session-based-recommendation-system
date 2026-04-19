@@ -80,7 +80,7 @@ Comparisons against local ablations should be labeled **approximate** unless pro
 
 ## 9. Current Results and Analysis
 
-The training pipeline consumes `data/processed/yoochoose_1_64` directly when preprocessed artifacts are available in-repo. Raw ingestion is only required when regenerating processed splits.
+In the current execution environment (April 19, 2026 UTC), no local raw YooChoose files were available at `data/raw`, and no completed run artifacts were present under `results/runs`. Therefore, this report does not claim final measured ablation outcomes yet.
 
 What is complete:
 
@@ -91,14 +91,14 @@ What is complete:
 
 ## 10. Limitations
 
-- Full protocol regeneration from raw data still requires local raw YooChoose files, even though training can run directly from committed preprocessed artifacts.
+- Missing local raw dataset in this environment blocks full training completion.
 - `yoochoose_1_64` path is an approximation protocol.
 - Literature-vs-local comparisons are not strict apples-to-apples.
 - GRU-KAN remains exploratory.
 
 ## 11. Conclusion
 
-The repository is positioned for reproducible completion from committed processed data: execute the three ablations, aggregate results with `scripts/report_results.py`, and report comparisons with explicit fairness caveats. Re-run preprocessing only when protocol regeneration is needed.
+The repository is positioned for reproducible completion once data is mounted: run preprocessing, execute the three ablations, aggregate results with `scripts/report_results.py`, and report comparisons with explicit fairness caveats.
 
 ## 12. References
 
